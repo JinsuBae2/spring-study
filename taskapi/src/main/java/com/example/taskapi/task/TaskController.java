@@ -81,4 +81,16 @@ public class TaskController {
 
         return ResponseEntity.ok(task);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTask(@PathVariable int id) {
+        Task task = taskService.findById(id);
+
+        if (task == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        taskService.deleteTask(task);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 }

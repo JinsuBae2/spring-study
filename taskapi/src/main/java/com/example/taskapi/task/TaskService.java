@@ -39,4 +39,8 @@ public class TaskService {
     public void updateTask(Task task, String title, String description) {
         task.update(title, description);
     }
+
+    public void deleteTask(Task task) {
+        taskRepository.deleteTask(task);
+    }
 }

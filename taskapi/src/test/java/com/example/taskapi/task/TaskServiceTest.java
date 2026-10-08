@@ -235,4 +235,42 @@ class TaskServiceTest {
         assertEquals(originalId, found.getId());
         assertEquals(TaskStatus.TODO, found.getStatus());
     }
+
+    @Test
+    void TODO_업무를_삭제하면_단건과_목록에서_제외된다() {
+        Task task = service.createTask("삭제할 업무", "");
+        int deletedId = task.getId();
+
+        service.deleteTask(task);
+
+        assertNull(service.findById(deletedId));
+        assertTrue(service.findAll().isEmpty());
+    }
+
+    @Test
+    void 진행_중인_업무도_삭제할_수_있다() {
+        Task task = service.createTask("진행 중인 업무", "");
+        service.startTask(task);
+        int deletedId = task.getId();
+        assertEquals(TaskStatus.IN_PROGRESS, service.findById(deletedId).getStatus());
+
+        service.deleteTask(task);
+
+        assertNull(service.findById(deletedId));
+        assertTrue(service.findAll().isEmpty());
+    }
+
+    @Test
+    void 완료한_업무도_삭제할_수_있다() {
+        Task task = service.createTask("완료한 업무", "");
+        service.startTask(task);
+        service.completeTask(task);
+        int deletedId = task.getId();
+        assertEquals(TaskStatus.DONE, service.findById(deletedId).getStatus());
+
+        service.deleteTask(task);
+
+        assertNull(service.findById(deletedId));
+        assertTrue(service.findAll().isEmpty());
+    }
 }
