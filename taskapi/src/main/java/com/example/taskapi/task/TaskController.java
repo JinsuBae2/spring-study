@@ -11,10 +11,10 @@ import java.util.List;
 @RequestMapping("/tasks")
 public class TaskController {
 
-    private final TaskRepository taskRepository;
+    private final TaskService taskService;
 
-    public TaskController(TaskRepository taskRepository) {
-        this.taskRepository = taskRepository;
+    public TaskController(TaskService taskService) {
+        this.taskService = taskService;
     }
 
 
@@ -26,21 +26,17 @@ public class TaskController {
 
     @PostMapping
     public Task createTask(@Valid @RequestBody TaskCreateRequest request) {
-        // request의 제목과 설명으로 Task를 생성해서 반환하세요.
-        Task task = new Task(request.title(), request.description());
-        taskRepository.save(task);
-        return task;
+        return taskService.createTask(request.title(), request.description());
     }
 
     @GetMapping
     public List<Task> getTasks() {
-        // Repository에서 목록 조회해서 반환
-        return taskRepository.findAll();
+        return taskService.findAll();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTask(@PathVariable int id) {
-        Task task = taskRepository.findById(id);
+        Task task = taskService.findById(id);
         if (task == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
@@ -49,37 +45,27 @@ public class TaskController {
 
     @PatchMapping("/{id}/start")
     public ResponseEntity<Task> startTask(@PathVariable int id) {
-        Task task = taskRepository.findById(id);
+        Task task = taskService.findById(id);
 
         if (task == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        if (task.getStatus() != TaskStatus.TODO) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-
-        task.start();
+        taskService.startTask(task);
 
         return ResponseEntity.ok(task);
     }
 
     @PatchMapping("/{id}/complete")
     public ResponseEntity<Task> completeTask(@PathVariable int id) {
-        Task task = taskRepository.findById(id);
+        Task task = taskService.findById(id);
 
         if (task == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        if (task.getStatus() != TaskStatus.IN_PROGRESS) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-
-        task.complete();
+        taskService.completeTask(task);
 
         return ResponseEntity.ok(task);
     }
-
-
 }
