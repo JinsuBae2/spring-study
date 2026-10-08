@@ -36,5 +36,7 @@ public class TaskService {
         task.complete();
     }
 
-
+    public void updateTask(Task task, String title, String description) {
+        task.update(title, description);
+    }
 }

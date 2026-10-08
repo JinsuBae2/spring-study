@@ -109,4 +109,130 @@ class TaskServiceTest {
         assertThrows(IllegalStateException.class, () -> service.completeTask(task));
         assertEquals(TaskStatus.DONE, service.findById(task.getId()).getStatus());
     }
+
+    @Test
+    void 업무_수정은_단건과_목록에_반영되고_ID와_순서를_유지한다() {
+        Task first = service.createTask("첫 업무", "원래 설명");
+        Task second = service.createTask("두 번째 업무", "두 번째 설명");
+        int originalId = first.getId();
+        int secondId = second.getId();
+
+        service.updateTask(first, "수정한 업무", "수정한 설명");
+
+        Task found = service.findById(originalId);
+        assertNotNull(found);
+        assertEquals("수정한 업무", found.getTitle());
+        assertEquals("수정한 설명", found.getDescription());
+        assertEquals(originalId, found.getId());
+        assertEquals(TaskStatus.TODO, found.getStatus());
+
+        List<Task> tasks = service.findAll();
+        assertEquals(2, tasks.size());
+        assertEquals(originalId, tasks.get(0).getId());
+        assertEquals(secondId, tasks.get(1).getId());
+        assertEquals("수정한 업무", tasks.get(0).getTitle());
+        assertEquals("수정한 설명", tasks.get(0).getDescription());
+
+        Task unchanged = service.findById(secondId);
+        assertNotNull(unchanged);
+        assertEquals("두 번째 업무", unchanged.getTitle());
+        assertEquals("두 번째 설명", unchanged.getDescription());
+        assertEquals(TaskStatus.TODO, unchanged.getStatus());
+    }
+
+    @Test
+    void 설명을_빈_문자열로_수정할_수_있다() {
+        Task task = service.createTask("원래 제목", "원래 설명");
+
+        service.updateTask(task, "원래 제목", "");
+
+        Task found = service.findById(task.getId());
+        assertNotNull(found);
+        assertEquals("원래 제목", found.getTitle());
+        assertEquals("", found.getDescription());
+    }
+
+    @Test
+    void 진행_중인_업무도_상태를_유지하면서_수정할_수_있다() {
+        Task task = service.createTask("원래 제목", "원래 설명");
+        int originalId = task.getId();
+        service.startTask(task);
+
+        service.updateTask(task, "수정 제목", "수정 설명");
+
+        Task found = service.findById(originalId);
+        assertNotNull(found);
+        assertEquals("수정 제목", found.getTitle());
+        assertEquals("수정 설명", found.getDescription());
+        assertEquals(originalId, found.getId());
+        assertEquals(TaskStatus.IN_PROGRESS, found.getStatus());
+    }
+
+    @Test
+    void 완료한_업무도_상태를_유지하면서_수정할_수_있다() {
+        Task task = service.createTask("원래 제목", "원래 설명");
+        int originalId = task.getId();
+        service.startTask(task);
+        service.completeTask(task);
+
+        service.updateTask(task, "수정 제목", "수정 설명");
+
+        Task found = service.findById(originalId);
+        assertNotNull(found);
+        assertEquals("수정 제목", found.getTitle());
+        assertEquals("수정 설명", found.getDescription());
+        assertEquals(originalId, found.getId());
+        assertEquals(TaskStatus.DONE, found.getStatus());
+    }
+
+    @Test
+    void null_제목으로_수정하면_예외가_발생하고_기존_데이터를_유지한다() {
+        Task task = service.createTask("원래 제목", "원래 설명");
+        int originalId = task.getId();
+        String invalidTitle = null;
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.updateTask(task, invalidTitle, "변경되면 안 되는 설명"));
+
+        Task found = service.findById(originalId);
+        assertNotNull(found);
+        assertEquals("원래 제목", found.getTitle());
+        assertEquals("원래 설명", found.getDescription());
+        assertEquals(originalId, found.getId());
+        assertEquals(TaskStatus.TODO, found.getStatus());
+    }
+
+    @Test
+    void 빈_문자열_제목으로_수정하면_예외가_발생하고_기존_데이터를_유지한다() {
+        Task task = service.createTask("원래 제목", "원래 설명");
+        int originalId = task.getId();
+        String invalidTitle = "";
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.updateTask(task, invalidTitle, "변경되면 안 되는 설명"));
+
+        Task found = service.findById(originalId);
+        assertNotNull(found);
+        assertEquals("원래 제목", found.getTitle());
+        assertEquals("원래 설명", found.getDescription());
+        assertEquals(originalId, found.getId());
+        assertEquals(TaskStatus.TODO, found.getStatus());
+    }
+
+    @Test
+    void 공백_제목으로_수정하면_예외가_발생하고_기존_데이터를_유지한다() {
+        Task task = service.createTask("원래 제목", "원래 설명");
+        int originalId = task.getId();
+        String invalidTitle = "   ";
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service.updateTask(task, invalidTitle, "변경되면 안 되는 설명"));
+
+        Task found = service.findById(originalId);
+        assertNotNull(found);
+        assertEquals("원래 제목", found.getTitle());
+        assertEquals("원래 설명", found.getDescription());
+        assertEquals(originalId, found.getId());
+        assertEquals(TaskStatus.TODO, found.getStatus());
+    }
 }

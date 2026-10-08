@@ -52,4 +52,12 @@ public class Task {
         }
         this.status = TaskStatus.DONE;
     }
+
+    public void update(String title, String description) {
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("제목은 비어 있을 수 없습니다.");
+        }
+        this.title = title;
+        this.description = description;
+    }
 }

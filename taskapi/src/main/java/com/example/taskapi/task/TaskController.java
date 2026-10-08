@@ -68,4 +68,17 @@ public class TaskController {
 
         return ResponseEntity.ok(task);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Task> updateTask(@PathVariable int id, @Valid @RequestBody TaskUpdateRequest request) {
+        Task task = taskService.findById(id);
+
+        if (task == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        taskService.updateTask(task, request.title(), request.description());
+
+        return ResponseEntity.ok(task);
+    }
 }
