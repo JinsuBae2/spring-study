@@ -249,3 +249,36 @@
 - 삭제 API의 모든 완료 기준을 직접 HTTP 요청으로 확인했다.
 - 앞선 TASK-010·011 검증 이력은 유지한다. 전체 테스트 수의 최신 값은 31개다.
 - 실제 커밋·푸시는 실행하지 않았다.
+
+## 9. 다음 학습 — TASK-013 PostgreSQL 실행과 기본 SQL — 진행 중
+
+- H2 대신 PostgreSQL을 사용해 DB·JPA 학습을 이어간다. 이번 과제는 DB 실행·접속과 기본 SQL까지이며 Spring 연결과 JPA 매핑은 다음 단계다.
+- Docker Compose로 PostgreSQL 18을 실행하고 DB·사용자 이름은 taskapi로 설정한다.
+- 비밀번호는 .env로 관리하고 Git에서 제외한다. 비밀번호 없는 설정 예시는 .env.example에 남긴다.
+- 이름 있는 볼륨으로 데이터를 보관하고 컨테이너 재생성 후 데이터 유지를 확인한다.
+- DB에 접속해 현재 DB·사용자를 확인하고 practice_tasks 테이블에서 SQL 생성·조회·수정·삭제를 연습한다.
+- 완료 기준: DB 접속, 두 업무의 ID 순 조회, 특정 ID 수정·삭제, 컨테이너 재생성 후 데이터 유지, DB·테이블·행·기본 키·볼륨의 역할 설명.
+- 작업 파일: compose.yaml, .env, .env.example, .gitignore. 기존 Java 코드는 이번 과제에서 변경하지 않는다.
+- 필수 학습 내용: Dockerfile과 Compose의 역할 차이, YAML 들여쓰기·매핑·목록·문자열·주석, 서비스 설정과 최상위 볼륨 선언, 포트 연결, .env 변수 치환과 컨테이너 환경 변수 전달.
+- 진행 증거: 학습자가 볼륨 이름 postgres_date의 미정의 오류와 Docker 엔진 소켓 연결 오류를 공유했다. 볼륨 이름 일치 및 Docker Desktop 실행을 안내했다.
+- 현재 미검증: 설정 검증 성공, DB 컨테이너 정상 실행, DB 접속, SQL CRUD, 데이터 유지. 완료로 기록하지 않는다.
+- Docker·YAML을 처음 직접 작성하는 과정과 오류 해결을 날짜별 일지의 하루 흐름에 포함한다.
+
+### 2026-10-10 진행 갱신과 범위 조정
+
+- 학습자 공유 출력으로 PostgreSQL 18 컨테이너 실행, 이름 있는 볼륨 생성, 로컬 5432 포트 연결을 확인했다.
+- 실제 DB 이름은 taskAPI, 사용자명은 admin이다. 앞서 제안한 taskapi 대신 이후 연결은 실제 값을 기준으로 한다.
+- psql 접속과 current_database(), current_user() 조회, practice_tasks 생성, 두 행 INSERT 및 ID 오름차순 SELECT를 확인했다.
+- SQL UPDATE·DELETE 연습은 학습자 요청으로 생략했다. 컨테이너 재생성 후 데이터 유지는 미검증이며 기존 TASK-013 전체 완료로 간주하지 않는다.
+- 학습자 요청에 따라 다음 단계인 Spring Boot·JPA 연결로 이동했다.
+
+## 10. PostgreSQL·JPA 연결 — 검증 완료 (2026-10-10)
+
+- Spring Data JPA와 PostgreSQL JDBC 드라이버를 추가하고 DataSource 접속 정보를 설정한다.
+- 비밀번호는 설정 파일에 직접 넣지 않고 외부 설정으로 전달한다. 이번 IDE 실행은 -DPOSTGRES_PASSWORD JVM 시스템 속성을 사용했다.
+- Hibernate의 자동 테이블 변경은 ddl-auto=none으로 두며, 기존 메모리 Repository와 API 구조를 유지한다. Task 엔티티·JPA Repository 전환은 다음 단계다.
+- 작업 파일: build.gradle, src/main/resources/application.properties.
+- 학습자 공유 실행 로그: PostgreSQL 18.6, jdbc:postgresql://localhost:5432/taskAPI 연결 생성, JPA EntityManagerFactory 초기화, 8080 포트 서버 시작 확인.
+- 학습자 공유 테스트 로그: Gradle test 실행, BUILD SUCCESSFUL in 3s. 조력자가 같은 실행 시각의 로컬 XML 결과를 확인해 총 31개, 실패·오류·생략 0개를 확인했다. 컨텍스트 1, Task 4, Repository 6, Service 20.
+- 조력자는 테스트를 재실행하지 않았다. 실제 업무 데이터는 아직 메모리 저장소를 사용하므로 이 검증은 업무 데이터의 DB 저장을 뜻하지 않는다.
+- 다음 학습: Task 엔티티 매핑과 JPA 저장·조회. open-in-view 설정은 트랜잭션 학습에서 함께 다룬다.
