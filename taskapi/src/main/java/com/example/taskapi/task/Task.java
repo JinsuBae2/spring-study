@@ -1,12 +1,26 @@
 package com.example.taskapi.task;
 
+import jakarta.persistence.*;
 import org.jspecify.annotations.NonNull;
 
+@Entity
+@Table(name = "tasks")
 public class Task {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
+    @Column(nullable = false)
     private String title;
+
+    @Column(columnDefinition = "text")
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TaskStatus status;
+
+    protected Task() {}
 
     public Task(@NonNull String title, String description) {
         if (title == null || title.isBlank()) {

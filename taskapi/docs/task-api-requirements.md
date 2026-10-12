@@ -282,3 +282,17 @@
 - 학습자 공유 테스트 로그: Gradle test 실행, BUILD SUCCESSFUL in 3s. 조력자가 같은 실행 시각의 로컬 XML 결과를 확인해 총 31개, 실패·오류·생략 0개를 확인했다. 컨텍스트 1, Task 4, Repository 6, Service 20.
 - 조력자는 테스트를 재실행하지 않았다. 실제 업무 데이터는 아직 메모리 저장소를 사용하므로 이 검증은 업무 데이터의 DB 저장을 뜻하지 않는다.
 - 다음 학습: Task 엔티티 매핑과 JPA 저장·조회. open-in-view 설정은 트랜잭션 학습에서 함께 다룬다.
+
+## 11. TASK-014 — Task 엔티티 매핑과 JPA 저장·조회 — 검증 완료 (2026-10-12)
+
+- Task를 tasks 테이블에 매핑하고 ID는 DB의 IDENTITY 방식으로 생성한다. 기존 int 타입과 메모리 저장소의 ID 부여 경로는 이번 단계에서 유지한다.
+- 제목·상태는 NOT NULL, 설명은 PostgreSQL TEXT로 매핑한다. 상태는 EnumType.STRING으로 저장하며 기존 제목 검증·상태 전환 규칙을 유지한다.
+- JPA용 protected 기본 생성자를 추가한다. JpaTaskRepository는 JpaRepository<Task, Integer>를 상속한다.
+- 로컬 학습 설정은 ddl-auto=update로 변경했다. 10절의 none은 연결만 검증하던 단계의 이력이다.
+- Controller·Service는 기존 메모리 TaskRepository를 계속 사용한다. 이번 완료는 API의 DB 전환을 의미하지 않는다.
+- 작업 파일: Task.java, JpaTaskRepository.java, application.properties, JpaTaskRepositoryTest.java.
+- 학습자가 공유한 테이블 구조에서 ID 자동 생성·기본 키, 제목·상태의 NOT NULL, 설명 TEXT, 상태의 허용 값 CHECK 제약을 확인했다.
+- JPA 테스트: flush·clear 후 저장 데이터 재조회와 ID·제목·설명·TODO 확인, 서로 다른 양의 ID 생성, 없는 ID의 빈 Optional 확인. SpringBootTest와 Transactional을 사용하며 테스트 데이터는 종료 후 롤백한다. ID 발급 번호의 롤백은 보장하지 않는다.
+- 10월 10일 JPA 테스트 3개 통과 후, 10월 12일 전체 실행은 DB 연결 거부로 30개 통과·4개 실패했다. 조력자 조회에서 실행 중 컨테이너의 호스트 포트 연결 누락을 확인하고 볼륨을 유지하는 컨테이너 재생성을 안내했다.
+- 이후 학습자가 전체 통과를 보고했고, 조력자가 2026-10-12 18:02경(KST)의 로컬 XML에서 전체 34개, 실패·오류·생략 0개를 확인했다. 컨텍스트 1, Task 4, 메모리 Repository 6, Service 20, JPA Repository 3.
+- 조력자는 테스트를 재실행하지 않았다. API DB 전환과 재시작 후 업무 데이터 유지 검증은 다음 단계다. 실제 커밋·푸시는 실행하지 않았다.
