@@ -45,52 +45,44 @@ public class TaskController {
 
     @PatchMapping("/{id}/start")
     public ResponseEntity<Task> startTask(@PathVariable int id) {
-        Task task = taskService.findById(id);
+        Task task = taskService.startTask(id);
 
         if (task == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-
-        taskService.startTask(task);
-
         return ResponseEntity.ok(task);
     }
 
     @PatchMapping("/{id}/complete")
     public ResponseEntity<Task> completeTask(@PathVariable int id) {
-        Task task = taskService.findById(id);
+        Task task = taskService.completeTask(id);
 
         if (task == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-
-        taskService.completeTask(task);
 
         return ResponseEntity.ok(task);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(@PathVariable int id, @Valid @RequestBody TaskUpdateRequest request) {
-        Task task = taskService.findById(id);
+        Task task = taskService.updateTask(id, request.title(), request.description());
 
         if (task == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-
-        taskService.updateTask(task, request.title(), request.description());
 
         return ResponseEntity.ok(task);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable int id) {
-        Task task = taskService.findById(id);
+        boolean isDelete = taskService.deleteTask(id);
 
-        if (task == null) {
+        if (!isDelete) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        taskService.deleteTask(task);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

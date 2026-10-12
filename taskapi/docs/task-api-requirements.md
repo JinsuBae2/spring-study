@@ -296,3 +296,18 @@
 - 10월 10일 JPA 테스트 3개 통과 후, 10월 12일 전체 실행은 DB 연결 거부로 30개 통과·4개 실패했다. 조력자 조회에서 실행 중 컨테이너의 호스트 포트 연결 누락을 확인하고 볼륨을 유지하는 컨테이너 재생성을 안내했다.
 - 이후 학습자가 전체 통과를 보고했고, 조력자가 2026-10-12 18:02경(KST)의 로컬 XML에서 전체 34개, 실패·오류·생략 0개를 확인했다. 컨텍스트 1, Task 4, 메모리 Repository 6, Service 20, JPA Repository 3.
 - 조력자는 테스트를 재실행하지 않았다. API DB 전환과 재시작 후 업무 데이터 유지 검증은 다음 단계다. 실제 커밋·푸시는 실행하지 않았다.
+
+## 12. TASK-015 — 업무 API의 JPA 저장소 전환 — 구현 완료, 검증 범위 제한 (2026-10-12)
+
+- TaskService의 저장소를 JpaTaskRepository로 전환했다. 목록은 findAllByOrderByIdAsc로 ID 오름차순을 명시한다.
+- Service 단건 조회는 Optional.orElse(null)로 기존 null 계약을 유지하고 Controller가 404로 변환한다.
+- 시작·완료·수정·삭제는 Service가 ID로 조회한 뒤 처리한다. 시작·완료·수정은 Task 또는 null, 삭제는 성공 여부 boolean을 반환한다.
+- 생성·시작·완료·수정·삭제에 Spring Transactional을 적용했다. Controller는 Service 결과로 기존 200·204·404 응답을 구성하며 업무 규칙과 400·409 오류 계약을 유지한다.
+- TaskServiceTest는 SpringBootTest·Transactional 기반으로 전환했다. 학습자 요청으로 객체 인수를 ID로 변경하고 정상 시작·완료·수정 6개 테스트에 flush·clear 후 재조회 검증을 추가했다.
+- 최신 Service 테스트 XML: 2026-10-12 18:43경(KST), 20개 통과, 실패·오류·생략 0개. 조력자는 결과를 읽었으며 해당 테스트를 직접 실행하지 않았다.
+- HTTP 생성 후 학습자가 공유한 SQL 결과에서 ID 45, 제목 JPA API 검증, 설명 DB 저장 확인, TODO 상태를 확인했다. 시작 API와 DB IN_PROGRESS 반영은 학습자 통과 보고로 확인했다.
+- 수정·완료·Spring 재시작 후 조회, 중복 완료 409, 삭제 204·이후 조회 및 재삭제 404·DB 0행 확인을 순서대로 안내했다. 이후 학습자는 긍정 응답을 했으나 각 상태 코드·SQL 결과를 개별 공유하지 않았으므로 직접 확인한 증거와 구분한다.
+- 마지막 '테스트는 패스'는 전체 테스트 재실행 생략 요청으로 해석했다. 이번 전환 이후 전체 34개 통과는 확인하지 않았다. 11절의 34개 통과는 API 전환 전 결과다.
+- 작업 파일: TaskService.java, TaskController.java, JpaTaskRepository.java, TaskServiceTest.java. 기존 메모리 Repository는 학습 이력으로 유지한다.
+- 남은 검증: 변경 후 전체 회귀 테스트, HTTP 오류 시 기존 데이터 유지 및 개별 HTTP·재시작·삭제 결과의 명시적 증거. Service 테스트는 테스트 자체의 트랜잭션 안에서 실행되므로 독립된 Service 트랜잭션 커밋 검증과 구분한다.
+- 실제 커밋·푸시는 실행하지 않았다.

@@ -1,21 +1,25 @@
 package com.example.taskapi.task;
 
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
+@Transactional
 class TaskServiceTest {
 
+    @Autowired
     private TaskService service;
 
-    @BeforeEach
-    void setUp() {
-        TaskRepository repository = new TaskRepository();
-        service = new TaskService(repository);
-    }
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Test
     void 업무를_생성하면_ID가_부여되고_저장된다() {
@@ -69,7 +73,10 @@ class TaskServiceTest {
     void 업무를_시작하면_조회한_상태가_IN_PROGRESS다() {
         Task task = service.createTask("시작 테스트", "");
 
-        service.startTask(task);
+        service.startTask(task.getId());
+
+        entityManager.flush();
+        entityManager.clear();
 
         assertEquals(TaskStatus.IN_PROGRESS, service.findById(task.getId()).getStatus());
     }
@@ -77,9 +84,13 @@ class TaskServiceTest {
     @Test
     void 시작한_업무를_완료하면_조회한_상태가_DONE이다() {
         Task task = service.createTask("완료 테스트", "");
-        service.startTask(task);
+        service.startTask(task.getId());
 
-        service.completeTask(task);
+        service.completeTask(task.getId());
+
+        entityManager.flush();
+        entityManager.clear();
+
         assertEquals(TaskStatus.DONE, service.findById(task.getId()).getStatus());
     }
 
@@ -87,26 +98,26 @@ class TaskServiceTest {
     void 시작_전_완료하면_예외가_발생하고_TODO를_유지한다() {
         Task task = service.createTask("시작 전 완료 테스트", "");
 
-        assertThrows(IllegalStateException.class, () -> service.completeTask(task));
+        assertThrows(IllegalStateException.class, () -> service.completeTask(task.getId()));
         assertEquals(TaskStatus.TODO, service.findById(task.getId()).getStatus());
     }
 
     @Test
     void 중복_시작하면_예외가_발생하고_IN_PROGRESS를_유지한다() {
         Task task = service.createTask("중복 시작 테스트", "");
-        service.startTask(task);
+        service.startTask(task.getId());
 
-        assertThrows(IllegalStateException.class, () -> service.startTask(task));
+        assertThrows(IllegalStateException.class, () -> service.startTask(task.getId()));
         assertEquals(TaskStatus.IN_PROGRESS, service.findById(task.getId()).getStatus());
     }
 
     @Test
     void 중복_완료하면_예외가_발생하고_DONE을_유지한다() {
         Task task = service.createTask("중복 완료 테스트", "");
-        service.startTask(task);
-        service.completeTask(task);
+        service.startTask(task.getId());
+        service.completeTask(task.getId());
 
-        assertThrows(IllegalStateException.class, () -> service.completeTask(task));
+        assertThrows(IllegalStateException.class, () -> service.completeTask(task.getId()));
         assertEquals(TaskStatus.DONE, service.findById(task.getId()).getStatus());
     }
 
@@ -117,7 +128,10 @@ class TaskServiceTest {
         int originalId = first.getId();
         int secondId = second.getId();
 
-        service.updateTask(first, "수정한 업무", "수정한 설명");
+        service.updateTask(first.getId(), "수정한 업무", "수정한 설명");
+
+        entityManager.flush();
+        entityManager.clear();
 
         Task found = service.findById(originalId);
         assertNotNull(found);
@@ -144,7 +158,10 @@ class TaskServiceTest {
     void 설명을_빈_문자열로_수정할_수_있다() {
         Task task = service.createTask("원래 제목", "원래 설명");
 
-        service.updateTask(task, "원래 제목", "");
+        service.updateTask(task.getId(), "원래 제목", "");
+
+        entityManager.flush();
+        entityManager.clear();
 
         Task found = service.findById(task.getId());
         assertNotNull(found);
@@ -156,9 +173,12 @@ class TaskServiceTest {
     void 진행_중인_업무도_상태를_유지하면서_수정할_수_있다() {
         Task task = service.createTask("원래 제목", "원래 설명");
         int originalId = task.getId();
-        service.startTask(task);
+        service.startTask(task.getId());
 
-        service.updateTask(task, "수정 제목", "수정 설명");
+        service.updateTask(task.getId(), "수정 제목", "수정 설명");
+
+        entityManager.flush();
+        entityManager.clear();
 
         Task found = service.findById(originalId);
         assertNotNull(found);
@@ -172,10 +192,13 @@ class TaskServiceTest {
     void 완료한_업무도_상태를_유지하면서_수정할_수_있다() {
         Task task = service.createTask("원래 제목", "원래 설명");
         int originalId = task.getId();
-        service.startTask(task);
-        service.completeTask(task);
+        service.startTask(task.getId());
+        service.completeTask(task.getId());
 
-        service.updateTask(task, "수정 제목", "수정 설명");
+        service.updateTask(task.getId(), "수정 제목", "수정 설명");
+
+        entityManager.flush();
+        entityManager.clear();
 
         Task found = service.findById(originalId);
         assertNotNull(found);
@@ -192,7 +215,7 @@ class TaskServiceTest {
         String invalidTitle = null;
 
         assertThrows(IllegalArgumentException.class,
-                () -> service.updateTask(task, invalidTitle, "변경되면 안 되는 설명"));
+                () -> service.updateTask(task.getId(), invalidTitle, "변경되면 안 되는 설명"));
 
         Task found = service.findById(originalId);
         assertNotNull(found);
@@ -209,7 +232,7 @@ class TaskServiceTest {
         String invalidTitle = "";
 
         assertThrows(IllegalArgumentException.class,
-                () -> service.updateTask(task, invalidTitle, "변경되면 안 되는 설명"));
+                () -> service.updateTask(task.getId(), invalidTitle, "변경되면 안 되는 설명"));
 
         Task found = service.findById(originalId);
         assertNotNull(found);
@@ -226,7 +249,7 @@ class TaskServiceTest {
         String invalidTitle = "   ";
 
         assertThrows(IllegalArgumentException.class,
-                () -> service.updateTask(task, invalidTitle, "변경되면 안 되는 설명"));
+                () -> service.updateTask(task.getId(), invalidTitle, "변경되면 안 되는 설명"));
 
         Task found = service.findById(originalId);
         assertNotNull(found);
@@ -241,7 +264,7 @@ class TaskServiceTest {
         Task task = service.createTask("삭제할 업무", "");
         int deletedId = task.getId();
 
-        service.deleteTask(task);
+        service.deleteTask(task.getId());
 
         assertNull(service.findById(deletedId));
         assertTrue(service.findAll().isEmpty());
@@ -250,11 +273,11 @@ class TaskServiceTest {
     @Test
     void 진행_중인_업무도_삭제할_수_있다() {
         Task task = service.createTask("진행 중인 업무", "");
-        service.startTask(task);
+        service.startTask(task.getId());
         int deletedId = task.getId();
         assertEquals(TaskStatus.IN_PROGRESS, service.findById(deletedId).getStatus());
 
-        service.deleteTask(task);
+        service.deleteTask(task.getId());
 
         assertNull(service.findById(deletedId));
         assertTrue(service.findAll().isEmpty());
@@ -263,12 +286,12 @@ class TaskServiceTest {
     @Test
     void 완료한_업무도_삭제할_수_있다() {
         Task task = service.createTask("완료한 업무", "");
-        service.startTask(task);
-        service.completeTask(task);
+        service.startTask(task.getId());
+        service.completeTask(task.getId());
         int deletedId = task.getId();
         assertEquals(TaskStatus.DONE, service.findById(deletedId).getStatus());
 
-        service.deleteTask(task);
+        service.deleteTask(task.getId());
 
         assertNull(service.findById(deletedId));
         assertTrue(service.findAll().isEmpty());

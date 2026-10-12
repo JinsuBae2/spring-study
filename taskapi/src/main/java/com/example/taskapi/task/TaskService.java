@@ -1,46 +1,81 @@
 package com.example.taskapi.task;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class TaskService {
 
-    private final TaskRepository taskRepository;
+    private final JpaTaskRepository jpaTaskRepository;
 
-    public TaskService(TaskRepository taskRepository) {
-        this.taskRepository = taskRepository;
+    public TaskService(JpaTaskRepository jpaTaskRepository) {
+        this.jpaTaskRepository = jpaTaskRepository;
     }
 
+    @Transactional
     public Task createTask(String title, String description) {
         Task task = new Task(title, description);
-        taskRepository.save(task);
+        jpaTaskRepository.save(task);
 
         return task;
     }
 
     public List<Task> findAll() {
-        return taskRepository.findAll();
+        return jpaTaskRepository.findAllByOrderByIdAsc();
     }
 
     public Task findById(int id) {
-        return taskRepository.findById(id);
+        return jpaTaskRepository.findById(id).orElse(null);
     }
 
-    public void startTask(Task task) {
+    @Transactional
+    public Task startTask(int id) {
+        Task task = jpaTaskRepository.findById(id).orElse(null);
+
+        if (task == null) {
+            return null;
+        }
         task.start();
+        return task;
     }
 
-    public void completeTask(Task task) {
+    @Transactional
+    public Task completeTask(int id) {
+        Task task = jpaTaskRepository.findById(id).orElse(null);
+
+        if (task == null) {
+            return null;
+        }
+
         task.complete();
+        return task;
     }
 
-    public void updateTask(Task task, String title, String description) {
+    @Transactional
+    public Task updateTask(int id, String title, String description) {
+        Task task = jpaTaskRepository.findById(id).orElse(null);
+
+        if (task == null) {
+            return null;
+        }
+
         task.update(title, description);
+
+        return task;
     }
 
-    public void deleteTask(Task task) {
-        taskRepository.deleteTask(task);
+    @Transactional
+    public boolean deleteTask(int id) {
+        Task task = jpaTaskRepository.findById(id).orElse(null);
+
+        if (task == null) {
+            return false;
+        }
+
+        jpaTaskRepository.delete(task);
+
+        return true;
     }
 }
